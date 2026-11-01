@@ -22,12 +22,13 @@ class SessionResponse(BaseModel):
 @router.post(
     "/session",
     response_model=SessionResponse,
-    summary="Dev auth stub — issue JWT for demo credentials",
+    summary="Dev/test auth stub only — not production hospital authentication",
 )
 def create_session(body: SessionRequest) -> SessionResponse:
-    """M0 stub: validates against DEMO_USERNAME / DEMO_PASSWORD env vars.
+    """Validates against DEMO_USERNAME / DEMO_PASSWORD env vars.
 
-    Not production auth. Full patient/staff flows land in M1+.
+    Strictly for development and synthetic demos. Do not treat as MFA/OIDC
+    hospital staff authentication.
     """
     settings = get_settings()
     if body.username != settings.demo_username or body.password != settings.demo_password:

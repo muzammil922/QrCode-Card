@@ -9,7 +9,10 @@ settings = get_settings()
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    description="Universal Health QR — Phase 1 health-api (M0 foundation)",
+    description=(
+        "Universal Health QR — Phase 1 health-api (M1: patients, UHID, opaque QR). "
+        "Demo auth is for development/testing only — not hospital-grade IdP."
+    ),
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",

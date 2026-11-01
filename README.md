@@ -2,7 +2,9 @@
 
 Phase 1 monorepo for the Universal Health QR prototype (FastAPI + PostgreSQL on Flowlab, Expo patient app, portals, hospital demos, MV3 extension).
 
-**Current milestone:** **M0 — Foundation** (API scaffold, Docker Compose, migrations, docs).
+**Current milestone:** **M1 — Patients / UHID / opaque QR** (additive migrations, synthetic registration, resolve/revoke, audit). M0 foundation remains the deploy base.
+
+**Demo auth** is for development/testing only — not production hospital authentication. See `docs/demo-script.md` and `docs/m1-backup-checklist.md`.
 
 ## Layout
 

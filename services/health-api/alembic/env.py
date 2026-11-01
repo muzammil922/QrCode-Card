@@ -5,7 +5,17 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.core.database import Base
-from app.models import Organization, User  # noqa: F401 — register metadata
+from app.models import (  # noqa: F401 — register metadata
+    AuditEvent,
+    Consent,
+    FhirResource,
+    IntegrationEvent,
+    Organization,
+    Patient,
+    QrToken,
+    StaffMembership,
+    User,
+)
 
 config = context.config
 
