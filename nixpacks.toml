@@ -1,0 +1,20 @@
+# Force a Python plan for this monorepo (FastAPI lives in services/health-api/).
+# Use when Dokploy Build type = Nixpacks. Prefer Dockerfile when available.
+
+providers = ["python"]
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.12"
+PYTHONPATH = "/app/services/health-api"
+
+[phases.setup]
+nixPkgs = ["python312", "postgresql"]
+
+[phases.install]
+cmds = [
+  "python -m pip install --upgrade pip",
+  "python -m pip install -r services/health-api/requirements.txt",
+]
+
+[start]
+cmd = "cd services/health-api && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
