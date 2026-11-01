@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin,
     audit,
     auth,
     consents,
@@ -20,3 +21,4 @@ api_router.include_router(audit.router)
 api_router.include_router(organizations.router)
 api_router.include_router(integration_events.router)
 api_router.include_router(sync_events.router)
+api_router.include_router(admin.router)

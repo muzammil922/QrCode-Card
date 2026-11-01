@@ -1,0 +1,113 @@
+:root {
+  --bg: #f7f4ee;
+  --ink: #16221c;
+  --muted: #5a685f;
+  --teal: #0f6b5c;
+  --line: rgba(22, 34, 28, 0.12);
+  --font: "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    linear-gradient(120deg, rgba(15, 107, 92, 0.08), transparent 45%),
+    var(--bg);
+}
+
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 3rem;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0 1.25rem;
+}
+
+.links {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+a {
+  color: var(--teal);
+  text-decoration: none;
+}
+
+.hero {
+  padding: 2.5rem 0 2rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--teal);
+  font-weight: 700;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.1;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.lede {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 38rem;
+}
+
+.cta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.primary {
+  background: var(--teal);
+  color: #fff !important;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 650;
+}
+
+section {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+h2 {
+  margin-top: 0;
+}
+
+ol,
+ul {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.fine,
+footer {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}

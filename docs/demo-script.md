@@ -171,3 +171,14 @@ npx expo start
 ```
 
 **Walkthrough:** register on portal → note UHID/QR → Hospital A save rx for that patient (staff register or use patient id) → refresh portal history → same meds on Expo after login.
+
+## M5 — Admin dashboard + marketing site
+
+```powershell
+cd "D:\My Team Projects\QrCode-Card\apps\web-admin"; npm run dev      # :5176
+cd "D:\My Team Projects\QrCode-Card\apps\web-marketing"; npm run dev # :5177
+```
+
+- Admin: stats, org approve/suspend stub, failed syncs, recent audit (demo JWT).
+- Marketing: Home / How it works / Security / Contact.
+- API: `GET /api/v1/admin/stats`, `/admin/organizations`, `PATCH .../organizations/{id}`, `/admin/sync-failures`.
