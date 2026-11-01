@@ -3,12 +3,8 @@ const $ = (id) => document.getElementById(id);
 let currentPatient = null;
 let scanTimer = null;
 let mediaStream = null;
-
-function show(el, on) {
-  el.hidden = !on;
-  if (on) el.classList.remove("hidden");
-  else el.classList.add("hidden");
-}
+let wedgeBuffer = "";
+let wedgeLastAt = 0;
 
 function setError(id, msg) {
   const el = $(id);
@@ -69,8 +65,69 @@ async function boot() {
     $("main-view").classList.remove("hidden");
     $("who").textContent = `${cfg.subject || "staff"} · ${cfg.orgName || "org"}`;
     await refreshPageContext();
+    focusWedge();
   }
 }
+
+function focusWedge() {
+  const el = $("wedgeInput");
+  if (el) {
+    el.focus();
+    $("wedge-status").textContent = "Ready — scan barcode / QR or tap NFC reader…";
+  }
+}
+
+function applyScannedToken(raw, source) {
+  const token = String(raw || "").trim();
+  if (token.length < 8) {
+    $("wedge-status").textContent = `${source}: token too short — try again`;
+    return;
+  }
+  $("qrToken").value = token;
+  $("wedgeInput").value = "";
+  wedgeBuffer = "";
+  $("wedge-status").textContent = `${source}: captured (${token.length} chars) — resolving…`;
+  $("btn-resolve").click();
+}
+
+/** USB/HID scanners & many NFC tap pads = keyboard wedge (fast keys + Enter). */
+function setupKeyboardWedge() {
+  const input = $("wedgeInput");
+  input.addEventListener("focus", () => {
+    $("wedge-status").textContent = "Focused — scan or tap now";
+  });
+
+  input.addEventListener("keydown", (e) => {
+    const now = Date.now();
+    if (now - wedgeLastAt > 80) {
+      // Human typing is slower; reset buffer between wedge bursts
+      if (e.key !== "Enter") wedgeBuffer = "";
+    }
+    wedgeLastAt = now;
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const fromInput = input.value.trim();
+      const token = fromInput || wedgeBuffer.trim();
+      wedgeBuffer = "";
+      applyScannedToken(token, "Scanner/tap");
+      return;
+    }
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      wedgeBuffer += e.key;
+    }
+  });
+
+  // Some readers fire input without reliable keydown timing
+  input.addEventListener("change", () => {
+    if (input.value.trim().length >= 8) {
+      applyScannedToken(input.value, "Scanner/tap");
+    }
+  });
+}
+
+$("btn-focus-wedge").addEventListener("click", () => focusWedge());
 
 $("btn-login").addEventListener("click", async () => {
   setError("login-error", "");
@@ -88,6 +145,7 @@ $("btn-login").addEventListener("click", async () => {
     $("main-view").classList.remove("hidden");
     $("who").textContent = `${$("username").value.trim()} · ${$("orgName").value}`;
     await refreshPageContext();
+    focusWedge();
   } catch (e) {
     setError("login-error", e.message || String(e));
   } finally {
@@ -109,7 +167,7 @@ $("btn-resolve").addEventListener("click", async () => {
   setError("main-error", "");
   const token = $("qrToken").value.trim();
   if (token.length < 8) {
-    setError("main-error", "Paste a valid opaque QR token");
+    setError("main-error", "Paste / scan a valid opaque QR token");
     return;
   }
   $("btn-resolve").disabled = true;
@@ -142,12 +200,15 @@ $("btn-resolve").addEventListener("click", async () => {
       }
     }
     $("records-card").classList.remove("hidden");
+    $("wedge-status").textContent = "Resolved OK — ready for next scan/tap";
     await refreshPageContext();
+    focusWedge();
   } catch (e) {
     setError("main-error", e.message || String(e));
     currentPatient = null;
     $("patient-card").classList.add("hidden");
     $("records-card").classList.add("hidden");
+    $("wedge-status").textContent = "Resolve failed — scan again";
   } finally {
     $("btn-resolve").disabled = false;
   }
@@ -212,51 +273,65 @@ $("btn-scan").addEventListener("click", async () => {
   if (mediaStream) {
     stopScan();
     $("btn-scan").textContent = "Camera scan";
+    focusWedge();
     return;
   }
   if (!("BarcodeDetector" in window)) {
     setError(
       "main-error",
-      "Camera QR decode not available in this browser — paste the opaque token instead."
+      "This Chrome build has no BarcodeDetector — use USB scanner/tap box or paste token."
     );
+    focusWedge();
     return;
   }
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
+    const constraints = {
       audio: false,
-    });
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    };
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: true,
+      });
+    }
     const video = $("scanner");
     video.srcObject = mediaStream;
     video.classList.remove("hidden");
     $("scan-hint").classList.remove("hidden");
     await video.play();
     $("btn-scan").textContent = "Stop camera";
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    const detector = new BarcodeDetector({
+      formats: ["qr_code", "aztec", "data_matrix"],
+    });
     scanTimer = setInterval(async () => {
       try {
         if (video.readyState < 2) return;
         const codes = await detector.detect(video);
-        if (codes.length) {
-          const raw = codes[0].rawValue;
-          if (raw) {
-            $("qrToken").value = raw;
-            stopScan();
-            $("btn-scan").textContent = "Camera scan";
-            $("btn-resolve").click();
-          }
+        if (codes.length && codes[0].rawValue) {
+          applyScannedToken(codes[0].rawValue, "Camera");
+          stopScan();
+          $("btn-scan").textContent = "Camera scan";
         }
       } catch {
         /* keep scanning */
       }
-    }, 500);
+    }, 350);
   } catch (e) {
     stopScan();
     setError("main-error", e.message || "Camera permission denied");
     $("btn-scan").textContent = "Camera scan";
+    focusWedge();
   }
 });
 
+setupKeyboardWedge();
 boot();
 setInterval(() => {
   if (!$("main-view").classList.contains("hidden")) refreshPageContext();

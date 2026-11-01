@@ -2,24 +2,36 @@
 
 Manifest V3 side panel for **demo hospital pages only** (`localhost:5173` Hospital A, `localhost:5174` Hospital B). Not a universal EHR scraper.
 
+## Where do you test? (important)
+
+| Environment | Status |
+|-------------|--------|
+| **Demo Hospital A/B** (this repo, Vite) | **Yes — use this now** |
+| Swagger / API `codebase.flowlab.fun` | Yes (API path) |
+| Real hospital software (Epic, etc.) | **Not yet** — needs Phase 3 + written hospital permission + a custom adapter |
+
+Abhi **kisi real hospital EHR pe mat test karo**. Pehle demo pages + extension.
+
+## Input devices supported
+
+| Device | How it works in this extension |
+|--------|--------------------------------|
+| **Webcam / laptop camera** | Side panel → **Camera scan** (Chrome `BarcodeDetector`) |
+| **USB barcode / QR scanner** | Usually “keyboard wedge”: click **Scanner / tap focus** box → scan → auto Enter → resolve |
+| **NFC / tap reader** (HID keyboard mode) | Same as scanner: focus the box → tap card that encodes the opaque token |
+| **Phone** | Print/show QR from patient card → scan with camera or USB scanner |
+
+Configure your scanner to send **suffix Enter** (most do by default).
+
 ## Load unpacked (Chrome or Edge)
 
-1. Start demos:
-   ```powershell
-   cd "D:\My Team Projects\QrCode-Card\apps\hospital-a-demo"; npm run dev
-   cd "D:\My Team Projects\QrCode-Card\apps\hospital-b-demo"; npm run dev
-   ```
-2. Open `chrome://extensions` (or `edge://extensions`) → enable **Developer mode**.
-3. **Load unpacked** → select this `extension/` folder.
-4. Pin “Universal Health QR” → click icon to open the **side panel**.
-5. Sign in with demo credentials (points at `https://codebase.flowlab.fun` by default).
-6. On Hospital A: save a final prescription; side panel shows page sync marker when present.
-7. On Hospital B: paste opaque QR token (or camera scan if supported) → Resolve → history → **Prefill demographics (confirm)**.
+1. Start demos (`npm run dev` on A `:5173` and B `:5174`).
+2. `chrome://extensions` → Developer mode → **Load unpacked** → this `extension/` folder.
+3. After code updates: click **Reload** on the extension card.
+4. Open side panel → login → focus scanner box or use camera.
 
 ## Safety
 
-- Host permissions limited to demo origins + API.
-- Tokens stay in the service worker / `chrome.storage` — not injected into page DOM for auth.
-- Prefill runs only after explicit confirmation and only for `data-uhq-field` approved fields on Hospital B.
-
-## Synthetic data only
+- Host permissions: demo origins + API only.
+- Prefill on Hospital B only after confirm.
+- Opaque QR only — no PHI in the code.

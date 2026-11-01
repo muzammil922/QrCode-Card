@@ -164,3 +164,25 @@ button.ghost {
   margin: 0.2rem 0;
   font-size: 0.88rem;
 }
+
+.device-box {
+  margin: 0.55rem 0 0.85rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: rgba(61, 154, 134, 0.08);
+}
+
+.device-box h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+}
+
+.device-box input:focus {
+  outline: 2px solid rgba(61, 154, 134, 0.55);
+  border-color: var(--accent);
+}
+
+.row.gap {
+  flex-wrap: wrap;
+}

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Universal Health QR",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Side panel for authorized Universal Health QR lookup on demo hospital pages. Not a universal EHR scraper.",
   "permissions": ["storage", "sidePanel", "activeTab", "tabs"],
   "host_permissions": [

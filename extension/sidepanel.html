@@ -50,18 +50,38 @@
       <section class="card">
         <h2>Patient QR</h2>
         <p class="note">
-          Paste an opaque QR token (scan with camera below). Scanning alone does
-          not grant access — the backend authorizes every request.
+          Test on <strong>demo</strong> Hospital A/B pages only (not a real hospital
+          EHR yet). Scanning alone does not grant access — backend authorizes every
+          request.
         </p>
-        <label for="qrToken">Opaque token</label>
+
+        <div class="device-box">
+          <h3>USB scanner / tap reader</h3>
+          <p class="note">
+            Most barcode scanners and NFC “tap” readers act like a keyboard: they
+            type the token then press Enter. Click the box below, then scan or tap.
+          </p>
+          <label for="wedgeInput">Scanner / tap focus</label>
+          <input
+            id="wedgeInput"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Click here, then scan QR or tap card…"
+          />
+          <p id="wedge-status" class="muted">Waiting for scan/tap…</p>
+        </div>
+
+        <label for="qrToken">Opaque token (manual paste OK)</label>
         <textarea id="qrToken" rows="3" placeholder="Paste QR token…"></textarea>
         <div class="row gap">
           <button id="btn-resolve" class="primary" type="button">
             Resolve &amp; load history
           </button>
           <button id="btn-scan" type="button">Camera scan</button>
+          <button id="btn-focus-wedge" type="button">Focus scanner box</button>
         </div>
-        <video id="scanner" class="hidden" playsinline></video>
+        <video id="scanner" class="hidden" playsinline muted></video>
         <canvas id="scan-canvas" class="hidden"></canvas>
         <p id="scan-hint" class="muted hidden">Point camera at QR — decoding…</p>
         <p id="main-error" class="error" hidden></p>
