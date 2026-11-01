@@ -31,7 +31,25 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        """Browser origins allowed to call the API.
+
+        Always includes local Vite demo ports so Hospital A/B on localhost
+        work against Flowlab even if CORS_ORIGINS was set to production-only.
+        """
+        configured = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        demo_local = [
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+        ]
+        seen: set[str] = set()
+        out: list[str] = []
+        for origin in configured + demo_local:
+            if origin and origin not in seen:
+                seen.add(origin)
+                out.append(origin)
+        return out
 
 
 @lru_cache

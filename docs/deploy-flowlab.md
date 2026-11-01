@@ -57,10 +57,13 @@ Local Docker Compose keeps using the **local** Postgres via root `.env` (`qr` / 
 APP_ENV=production
 DATABASE_URL=postgresql+psycopg://QR:<PASSWORD>@qrcodecard-srwlkj:5432/code
 JWT_SECRET=<strong-random-secret>
-CORS_ORIGINS=https://codebase.flowlab.fun
+CORS_ORIGINS=https://codebase.flowlab.fun,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174
 DEMO_USERNAME=<demo-user>
 DEMO_PASSWORD=<demo-password>
 ```
+
+**Hospital demos on your PC:** without `localhost:5173` / `5174` in CORS (or after the API build that always merges those ports), the browser shows **Failed to fetch** on login.
+
 
 Optional (usually leave unset — Dokploy / image defaults cover them):
 
