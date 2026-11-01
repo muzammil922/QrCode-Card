@@ -45,18 +45,51 @@ Use **one** of these build setups:
 - Health path for probes: **`GET /health`** → `200` + `{"status":"ok"}`
 - OpenAPI: `/docs`
 
-## Required environment variables (Dokploy → Environment)
+## Dokploy env (production)
 
-Set in the panel / secrets — **never commit**:
+Set these in **Dokploy → Environment** (or Secrets). **Never commit real passwords to GitHub.**
 
-| Variable | Example / notes |
-|----------|-----------------|
-| `DATABASE_URL` | `postgresql+psycopg://QR:<PASSWORD>@qrcodecard-srwlkj:5432/code` |
-| `APP_ENV` | `production` |
-| `JWT_SECRET` | Strong random secret |
-| `CORS_ORIGINS` | Allowed front-end origins (comma-separated) |
-| `DEMO_USERNAME` / `DEMO_PASSWORD` | M0 stub only; rotate or disable for shared demos |
-| `PORT` | Optional — Dokploy often injects this; app uses `${PORT:-8000}` |
+Local Docker Compose keeps using the **local** Postgres via root `.env` (`qr` / `qr_dev_password` / `localhost` or Compose service `postgres`). Dokploy must use the **managed / Flowlab Postgres**, not those local values.
+
+### Paste format (KEY=value) — placeholders only in git
+
+```env
+APP_ENV=production
+DATABASE_URL=postgresql+psycopg://QR:<PASSWORD>@qrcodecard-srwlkj:5432/code
+JWT_SECRET=<strong-random-secret>
+CORS_ORIGINS=https://codebase.flowlab.fun
+DEMO_USERNAME=<demo-user>
+DEMO_PASSWORD=<demo-password>
+```
+
+Optional (usually leave unset — Dokploy / image defaults cover them):
+
+```env
+# PORT=8000
+# APP_NAME=Universal Health QR API
+# API_PREFIX=/api/v1
+# JWT_ALGORITHM=HS256
+# JWT_EXPIRE_MINUTES=60
+```
+
+### Required vs optional
+
+| Variable | Production | Notes |
+|----------|------------|--------|
+| `DATABASE_URL` | **Required** | Must be Flowlab Postgres. Driver prefix: `postgresql+psycopg://` (psycopg3). URL-encode special chars in the password (`@`, `#`, `/`, `%`, spaces, etc.). |
+| `APP_ENV` | **Required** | Use `production`. |
+| `JWT_SECRET` | **Required** | Strong random; do not use the repo default. |
+| `CORS_ORIGINS` | **Required** | Comma-separated browser origins that call the API. |
+| `DEMO_USERNAME` | **Required** (M0) | Demo auth stub until real OAuth. |
+| `DEMO_PASSWORD` | **Required** (M0) | Rotate for any shared demo. |
+| `PORT` | Optional | Dokploy often injects; app listens on `${PORT:-8000}`. |
+| `APP_NAME`, `API_PREFIX`, `JWT_ALGORITHM`, `JWT_EXPIRE_MINUTES` | Optional | Sensible defaults in Settings. |
+
+### Postgres hostname note
+
+`qrcodecard-srwlkj` is typically the **Dokploy internal Docker/service name**. If the API and Postgres share the same Dokploy network, that host is correct. If the API cannot connect, open the Postgres service in Dokploy and copy its **internal** connection host/URL into `DATABASE_URL`.
+
+Migrations (`alembic upgrade head`) and the app both read `DATABASE_URL` from the environment via pydantic Settings — no extra wiring needed.
 
 ## Migrations
 
