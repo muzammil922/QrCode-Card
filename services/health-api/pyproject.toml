@@ -1,0 +1,8 @@
+[project]
+name = "health-api"
+version = "0.1.0"
+description = "Universal Health QR central API"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100

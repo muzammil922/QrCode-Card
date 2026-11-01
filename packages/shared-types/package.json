@@ -1,0 +1,8 @@
+{
+  "name": "@uhq/shared-types",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript types stub (M0)",
+  "main": "index.ts",
+  "types": "index.ts"
+}

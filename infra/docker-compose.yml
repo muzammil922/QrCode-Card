@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: uhq-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qr_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-code}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - uhq_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qr} -d ${POSTGRES_DB:-code}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  health-api:
+    build:
+      context: ../services/health-api
+      dockerfile: Dockerfile
+    container_name: uhq-health-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://qr:qr_dev_password@postgres:5432/code}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-m0-dev-only}
+      DEMO_USERNAME: ${DEMO_USERNAME:-demo@health.local}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo-password-change-me}
+    ports:
+      - "${API_PORT:-8000}:8000"
+
+  adminer:
+    image: adminer:4
+    container_name: uhq-adminer
+    depends_on:
+      - postgres
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    profiles:
+      - tools
+
+volumes:
+  uhq_pg_data:
