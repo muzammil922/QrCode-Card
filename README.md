@@ -2,7 +2,7 @@
 
 Phase 1 monorepo for the Universal Health QR prototype (FastAPI + PostgreSQL on Flowlab, Expo patient app, portals, hospital demos, MV3 extension).
 
-**Current milestone:** **M2 — Hospital A → cloud → Hospital B prescription sync** (idempotent integration events, FHIR MedicationRequest store, sync status, demos). M0/M1 APIs remain intact (additive migrations only).
+**Current milestone:** **M3 — Chrome/Edge MV3 extension** (side panel, QR resolve, Hospital B confirmed prefill). M2 demos + sync and M0/M1 APIs remain intact.
 
 **Demo auth** is for development/testing only — not production hospital authentication. See `docs/demo-script.md` and `docs/m1-backup-checklist.md`.
 

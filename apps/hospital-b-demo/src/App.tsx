@@ -134,6 +134,35 @@ export default function App() {
 
         {error && <p className="error">{error}</p>}
 
+        <div className="ehr-form" data-uhq-form="demographics">
+          <h2>Local chart demographics</h2>
+          <p className="hint">
+            Extension can prefill these approved fields after you confirm — never
+            silently.
+          </p>
+          <label htmlFor="uhq-demo-name">Display name</label>
+          <input
+            id="uhq-demo-name"
+            data-uhq-field="display_name"
+            placeholder="Empty until confirmed prefill"
+            autoComplete="off"
+          />
+          <label htmlFor="uhq-demo-uhid">UHID</label>
+          <input
+            id="uhq-demo-uhid"
+            data-uhq-field="uhid"
+            placeholder="Empty until confirmed prefill"
+            autoComplete="off"
+          />
+          <label htmlFor="uhq-demo-dob">Date of birth</label>
+          <input
+            id="uhq-demo-dob"
+            data-uhq-field="date_of_birth"
+            placeholder="YYYY-MM-DD"
+            autoComplete="off"
+          />
+        </div>
+
         {patient && (
           <div className="patient-banner">
             <strong>{patient.display_name}</strong>

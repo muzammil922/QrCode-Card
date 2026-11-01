@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Universal Health QR",
+  "version": "0.3.0",
+  "description": "Side panel for authorized Universal Health QR lookup on demo hospital pages. Not a universal EHR scraper.",
+  "permissions": ["storage", "sidePanel", "activeTab", "tabs"],
+  "host_permissions": [
+    "http://localhost:5173/*",
+    "http://localhost:5174/*",
+    "http://127.0.0.1:5173/*",
+    "http://127.0.0.1:5174/*",
+    "https://codebase.flowlab.fun/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Universal Health QR",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:5174/*",
+        "http://127.0.0.1:5173/*",
+        "http://127.0.0.1:5174/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

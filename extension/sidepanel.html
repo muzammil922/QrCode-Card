@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Universal Health QR</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="top">
+      <p class="brand">Universal Health QR</p>
+      <p class="sub">Demo extension — synthetic data only</p>
+    </header>
+
+    <section id="login-view" class="card">
+      <h2>Staff login</h2>
+      <p class="note">
+        Demo JWT only — not hospital-grade MFA/OIDC. Credentials never leave this
+        extension into the page DOM.
+      </p>
+      <label for="apiBase">API base</label>
+      <input id="apiBase" value="https://codebase.flowlab.fun" />
+      <label for="username">Username</label>
+      <input id="username" value="demo@health.local" autocomplete="username" />
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        value="demo-password-change-me"
+        autocomplete="current-password"
+      />
+      <label for="orgName">Organization</label>
+      <select id="orgName">
+        <option>Demo Hospital B</option>
+        <option>Demo Hospital A</option>
+      </select>
+      <button id="btn-login" class="primary" type="button">Sign in</button>
+      <p id="login-error" class="error" hidden></p>
+    </section>
+
+    <section id="main-view" class="hidden">
+      <div class="row between">
+        <div>
+          <p class="muted" id="who"></p>
+          <p class="muted" id="page-ctx">Page: —</p>
+        </div>
+        <button id="btn-logout" type="button" class="ghost">Log out</button>
+      </div>
+
+      <section class="card">
+        <h2>Patient QR</h2>
+        <p class="note">
+          Paste an opaque QR token (scan with camera below). Scanning alone does
+          not grant access — the backend authorizes every request.
+        </p>
+        <label for="qrToken">Opaque token</label>
+        <textarea id="qrToken" rows="3" placeholder="Paste QR token…"></textarea>
+        <div class="row gap">
+          <button id="btn-resolve" class="primary" type="button">
+            Resolve &amp; load history
+          </button>
+          <button id="btn-scan" type="button">Camera scan</button>
+        </div>
+        <video id="scanner" class="hidden" playsinline></video>
+        <canvas id="scan-canvas" class="hidden"></canvas>
+        <p id="scan-hint" class="muted hidden">Point camera at QR — decoding…</p>
+        <p id="main-error" class="error" hidden></p>
+      </section>
+
+      <section id="patient-card" class="card hidden">
+        <h2>Patient summary</h2>
+        <p><strong id="p-name"></strong></p>
+        <p class="mono" id="p-uhid"></p>
+        <p class="muted" id="p-meta"></p>
+        <button id="btn-prefill" class="primary" type="button">
+          Prefill Hospital B demographics (confirm)
+        </button>
+        <p class="note">
+          Fills only approved fields on the Hospital B page after you click —
+          never silent write-back.
+        </p>
+      </section>
+
+      <section id="records-card" class="card hidden">
+        <h2>Authorized records</h2>
+        <div id="records"></div>
+      </section>
+
+      <section class="card">
+        <h2>Sync status (page)</h2>
+        <p id="sync-status" class="mono">—</p>
+        <p class="note">
+          On Hospital A, shows post-save sync state from the page marker. Never
+          claims success before server acknowledgement.
+        </p>
+      </section>
+    </section>
+
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

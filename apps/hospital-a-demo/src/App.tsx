@@ -246,7 +246,11 @@ export default function App() {
           )}
 
           {sync && (
-            <div className="sync-status" data-status={sync.status}>
+            <div
+              className="sync-status"
+              data-status={sync.status}
+              data-uhq-sync-status={sync.status}
+            >
               <strong>Sync: {sync.status}</strong>
               <div className="muted">Event {sync.id}</div>
               {sync.fhir_resource_id && (

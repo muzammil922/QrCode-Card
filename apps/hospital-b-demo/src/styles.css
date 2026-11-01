@@ -96,6 +96,23 @@ body {
   font-weight: 650;
 }
 
+.ehr-form {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--line);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ehr-form h2 {
+  margin-bottom: 0.35rem;
+}
+
+.ehr-form .hint {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 label {
   display: block;
   font-size: 0.78rem;

@@ -129,3 +129,14 @@ $records = Invoke-RestMethod -Method GET "$Base/api/v1/patients/$PatientId/recor
 | Sync statuses | `queued` → `sent` → `confirmed` (or `failed` + retry) |
 | Hospital B records | Authorized + consented; unauthorized → 403 + audit |
 | QR payload | Still opaque — no medication text in token |
+
+## M3 — Chrome / Edge extension
+
+See [`extension/README.md`](../extension/README.md).
+
+1. Run Hospital A (`:5173`) and Hospital B (`:5174`).
+2. `chrome://extensions` → Developer mode → **Load unpacked** → `extension/` folder.
+3. Open side panel → demo login (Hospital B org for read path).
+4. After M2 sync: paste opaque QR token → **Resolve & load history**.
+5. On Hospital B tab: **Prefill demographics (confirm)** → only approved `data-uhq-field` inputs fill.
+6. On Hospital A tab: sync status marker may appear in side panel when a save is confirmed.
