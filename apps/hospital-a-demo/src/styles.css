@@ -1,0 +1,248 @@
+:root {
+  --ink: #0f2a24;
+  --ink-muted: #3d5c54;
+  --paper: #f3f7f4;
+  --panel: rgba(255, 255, 255, 0.82);
+  --accent: #0d7a5f;
+  --accent-deep: #065544;
+  --warn: #b45309;
+  --danger: #9f1239;
+  --ok: #047857;
+  --line: rgba(15, 42, 36, 0.12);
+  --shadow: 0 18px 50px rgba(15, 42, 36, 0.12);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #c8ebe0 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #d9efe8 0%, transparent 45%),
+    linear-gradient(165deg, #e8f3ee 0%, var(--paper) 40%, #dff0e9 100%);
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.brand-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  animation: rise 0.6s ease both;
+}
+
+.brand-bar h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.brand-bar p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.65rem;
+  background: var(--panel);
+}
+
+.layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr 1.1fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.35rem 1.5rem;
+  animation: rise 0.7s ease both;
+}
+
+.panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0 0 0.85rem;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  margin-bottom: 0.3rem;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid rgba(13, 122, 95, 0.35);
+  border-color: var(--accent);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  padding: 0.7rem 1.1rem;
+  background: var(--accent);
+  color: #fff;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--accent-deep);
+  border: 1px solid var(--line);
+}
+
+.patient-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.patient-list li {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.patient-list li:hover,
+.patient-list li.selected {
+  background: #e7f6f0;
+}
+
+.patient-list strong {
+  display: block;
+}
+
+.patient-list span {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.sync-status {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: #edf8f3;
+  animation: pulse-in 0.45s ease both;
+}
+
+.sync-status[data-status="failed"] {
+  border-left-color: var(--danger);
+  background: #fff1f4;
+}
+
+.sync-status[data-status="confirmed"] {
+  border-left-color: var(--ok);
+}
+
+.sync-status[data-status="queued"],
+.sync-status[data-status="sent"] {
+  border-left-color: var(--warn);
+  background: #fff7ed;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.muted {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

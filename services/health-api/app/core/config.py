@@ -16,7 +16,10 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://qr:qr_dev_password@localhost:5432/code"
 
-    cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    cors_origins: str = (
+        "http://localhost:3000,http://localhost:5173,http://localhost:5174,"
+        "http://127.0.0.1:5173,http://127.0.0.1:5174"
+    )
 
     jwt_secret: str = "change-me-in-production-m0-dev-only"
     jwt_algorithm: str = "HS256"

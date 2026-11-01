@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime, timezone
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import Principal, get_current_principal
 from app.models.consent import Consent
+from app.models.fhir_resource import FhirResource
 from app.models.organization import Organization
 from app.models.patient import Patient
 from app.models.qr_token import QrToken, QrTokenStatus
@@ -70,6 +71,105 @@ class RevokeQrResponse(BaseModel):
     replacement_token_id: uuid.UUID | None = None
 
 
+class PatientRecordItem(BaseModel):
+    id: uuid.UUID
+    resource_type: str
+    version: int
+    status: str
+    source_org_id: uuid.UUID | None
+    source_org_name: str | None
+    source_record_id: str | None
+    body: dict[str, Any]
+    created_at: datetime
+
+
+class PatientRecordsPage(BaseModel):
+    patient_id: uuid.UUID
+    uhid: str
+    total: int
+    limit: int
+    offset: int
+    items: list[PatientRecordItem]
+
+
+def _active_consent_orgs(db: Session, patient_id: uuid.UUID) -> set[uuid.UUID]:
+    consents = (
+        db.query(Consent)
+        .filter(
+            Consent.patient_id == patient_id,
+            Consent.revoked_at.is_(None),
+        )
+        .all()
+    )
+    return {c.grantee_org_id for c in consents}
+
+
+def _authorize_patient_access(
+    db: Session,
+    *,
+    principal: Principal,
+    patient: Patient,
+    action: str,
+    org_id: uuid.UUID | None = None,
+) -> None:
+    if principal.role not in ("demo", "staff", "admin"):
+        write_audit(
+            db,
+            actor=principal.subject,
+            action=action,
+            resource_type="patient",
+            resource_id=str(patient.id),
+            decision="deny",
+            detail={"reason": "role_not_allowed", "role": principal.role},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Caller role cannot access patient records",
+        )
+
+    allowed = _active_consent_orgs(db, patient.id)
+    if not allowed:
+        write_audit(
+            db,
+            actor=principal.subject,
+            action=action,
+            resource_type="patient",
+            resource_id=str(patient.id),
+            decision="deny",
+            detail={"reason": "no_consent"},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No active consent for this patient",
+        )
+
+    # Prefer explicit org query, then JWT org claim
+    check_org: uuid.UUID | None = org_id
+    if check_org is None and principal.org_id:
+        try:
+            check_org = uuid.UUID(str(principal.org_id))
+        except ValueError:
+            check_org = None
+
+    if check_org is not None and check_org not in allowed:
+        write_audit(
+            db,
+            actor=principal.subject,
+            action=action,
+            resource_type="patient",
+            resource_id=str(patient.id),
+            decision="deny",
+            detail={"reason": "org_not_consented", "org_id": str(check_org)},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Organization is not authorized for this patient",
+        )
+
+
 def _ensure_synthetic_only(display_name: str) -> None:
     # Soft guard: registration always marks is_synthetic=True in DB.
     if not display_name.strip():
@@ -77,6 +177,35 @@ def _ensure_synthetic_only(display_name: str) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="display_name required",
         )
+
+
+@router.get(
+    "",
+    response_model=list[PatientSummary],
+    summary="List or lookup synthetic patients",
+)
+def list_patients(
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    uhid: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> list[PatientSummary]:
+    _ = principal
+    q = db.query(Patient).filter(Patient.is_synthetic.is_(True))
+    if uhid:
+        q = q.filter(Patient.uhid == uhid.strip())
+    rows = q.order_by(Patient.created_at.desc()).limit(limit).all()
+    return [
+        PatientSummary(
+            id=p.id,
+            uhid=p.uhid,
+            display_name=p.display_name,
+            date_of_birth=p.date_of_birth,
+            is_synthetic=p.is_synthetic,
+            created_at=p.created_at,
+        )
+        for p in rows
+    ]
 
 
 @router.post(
@@ -276,6 +405,83 @@ def resolve_qr(
         date_of_birth=patient.date_of_birth,
         is_synthetic=patient.is_synthetic,
         created_at=patient.created_at,
+    )
+
+
+@router.get(
+    "/{patient_id}/records",
+    response_model=PatientRecordsPage,
+    summary="Authorized paginated FHIR-aligned clinical records",
+)
+def list_patient_records(
+    patient_id: uuid.UUID,
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    org_id: Annotated[uuid.UUID | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    resource_type: Annotated[str | None, Query()] = None,
+) -> PatientRecordsPage:
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if patient is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+
+    _authorize_patient_access(
+        db,
+        principal=principal,
+        patient=patient,
+        action="patient.records",
+        org_id=org_id,
+    )
+
+    q = db.query(FhirResource).filter(FhirResource.patient_id == patient_id)
+    if resource_type:
+        q = q.filter(FhirResource.resource_type == resource_type)
+    total = q.count()
+    rows = (
+        q.order_by(FhirResource.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    org_ids = {r.source_org_id for r in rows if r.source_org_id}
+    org_names: dict[uuid.UUID, str] = {}
+    if org_ids:
+        for org in db.query(Organization).filter(Organization.id.in_(org_ids)).all():
+            org_names[org.id] = org.name
+
+    write_audit(
+        db,
+        actor=principal.subject,
+        action="patient.records",
+        resource_type="patient",
+        resource_id=str(patient.id),
+        decision="allow",
+        detail={"total": total, "returned": len(rows)},
+    )
+    db.commit()
+
+    return PatientRecordsPage(
+        patient_id=patient.id,
+        uhid=patient.uhid,
+        total=total,
+        limit=limit,
+        offset=offset,
+        items=[
+            PatientRecordItem(
+                id=r.id,
+                resource_type=r.resource_type,
+                version=r.version,
+                status=r.status,
+                source_org_id=r.source_org_id,
+                source_org_name=org_names.get(r.source_org_id) if r.source_org_id else None,
+                source_record_id=r.source_record_id,
+                body=r.body or {},
+                created_at=r.created_at,
+            )
+            for r in rows
+        ],
     )
 
 

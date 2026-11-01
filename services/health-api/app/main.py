@@ -10,7 +10,8 @@ app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     description=(
-        "Universal Health QR — Phase 1 health-api (M1: patients, UHID, opaque QR). "
+        "Universal Health QR — Phase 1 health-api "
+        "(M2: Hospital A→cloud→B prescription sync; M1 patients/UHID/QR). "
         "Demo auth is for development/testing only — not hospital-grade IdP."
     ),
     docs_url="/docs",

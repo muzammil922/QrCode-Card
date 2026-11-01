@@ -1,3 +1,6 @@
 # fhir-mapping
 
-Stub package for FHIR resource mapping helpers (Patient, MedicationRequest, Provenance, AuditEvent). Implementation starts with M1 record sync.
+Helpers for FHIR-aligned MedicationRequest bodies used by M2 sync.
+
+Runtime implementation: `services/health-api/app/services/fhir_mapping.py`
+(this package folder name is not a Python import path).

@@ -1,3 +1,6 @@
-"""FHIR mapping stubs — Phase 1 implementation begins in M1."""
+"""FHIR mapping helpers — implementation lives in health-api for runtime import.
 
-__version__ = "0.0.1"
+See `services/health-api/app/services/fhir_mapping.py`.
+"""
+
+__version__ = "0.2.0"

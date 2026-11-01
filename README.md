@@ -2,24 +2,28 @@
 
 Phase 1 monorepo for the Universal Health QR prototype (FastAPI + PostgreSQL on Flowlab, Expo patient app, portals, hospital demos, MV3 extension).
 
-**Current milestone:** **M1 — Patients / UHID / opaque QR** (additive migrations, synthetic registration, resolve/revoke, audit). M0 foundation remains the deploy base.
+**Current milestone:** **M2 — Hospital A → cloud → Hospital B prescription sync** (idempotent integration events, FHIR MedicationRequest store, sync status, demos). M0/M1 APIs remain intact (additive migrations only).
 
 **Demo auth** is for development/testing only — not production hospital authentication. See `docs/demo-script.md` and `docs/m1-backup-checklist.md`.
 
 ## Layout
 
 ```
-apps/                  # mobile, web-patient, web-marketing, web-admin, hospital demos (placeholders)
-services/health-api/   # FastAPI application
-extension/             # MV3 placeholder
-packages/              # shared-types, fhir-mapping stubs
-infra/                 # docker-compose.yml + migration notes
-docs/                  # architecture, security, deploy, demo script
+apps/
+  hospital-a-demo/   # Harborview A — prescribe + post-save sync
+  hospital-b-demo/   # Ridge Clinic B — retrieve synced history
+  …                  # mobile, web-patient, marketing, admin (placeholders)
+services/health-api/ # FastAPI application
+extension/           # MV3 placeholder
+packages/            # shared-types, fhir-mapping stubs
+infra/               # docker-compose.yml + migration notes
+docs/                # architecture, security, deploy, demo script
 ```
 
 ## Prerequisites
 
 - Python 3.11+ (3.12 recommended for Docker image)
+- Node 20+ (for hospital demos)
 - Docker Desktop **or** local PostgreSQL (for migrations)
 - Git
 
@@ -61,16 +65,45 @@ cd services/health-api
 alembic upgrade head
 ```
 
-## Demo auth (M0 stub)
+## Hospital A / B demos (M2)
+
+Against production Flowlab API (default) or local API:
+
+```powershell
+# Hospital A — http://localhost:5173
+cd apps/hospital-a-demo
+npm install
+npm run dev
+
+# Hospital B — http://localhost:5174
+cd apps/hospital-b-demo
+npm install
+npm run dev
+```
+
+Set `VITE_API_BASE` in each app’s `.env` (see `.env.example`). Full A→cloud→B script: [`docs/demo-script.md`](docs/demo-script.md).
+
+## Demo auth (stub)
 
 ```http
 POST /api/v1/auth/session
 Content-Type: application/json
 
-{"username":"demo@health.local","password":"demo-password-change-me"}
+{"username":"demo@health.local","password":"demo-password-change-me","org_name":"Demo Hospital A"}
 ```
 
-Override with `DEMO_USERNAME` / `DEMO_PASSWORD` in `.env`.
+Optional `org_name`: `Demo Hospital A` or `Demo Hospital B` stamps `org_id` on the JWT. Override credentials with `DEMO_USERNAME` / `DEMO_PASSWORD`.
+
+## Key M2 API routes
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `POST` | `/api/v1/integration-events` | Final/approved only; idempotent |
+| `GET` | `/api/v1/sync-events/{id}` | `queued` \| `sent` \| `confirmed` \| `failed` |
+| `POST` | `/api/v1/sync-events/{id}/retry` | Failed events |
+| `GET` | `/api/v1/patients/{id}/records` | Auth + consent required |
+| `GET` | `/api/v1/patients` | List / UHID lookup |
+| `GET` | `/api/v1/organizations` | Demo hospitals |
 
 ## Flowlab / production DATABASE_URL
 
@@ -79,11 +112,11 @@ Set on the host only (never commit):
 ```text
 DATABASE_URL=postgresql+psycopg://QR:<PASSWORD>@qrcodecard-srwlkj:5432/code
 APP_ENV=production
-CORS_ORIGINS=https://your-frontends.example
+CORS_ORIGINS=https://your-frontends.example,http://localhost:5173,http://localhost:5174
 JWT_SECRET=<strong-secret>
 ```
 
-Deploy notes and 502 remediation: [`docs/deploy-flowlab.md`](docs/deploy-flowlab.md).
+Deploy notes: [`docs/deploy-flowlab.md`](docs/deploy-flowlab.md).
 
 Production URL: https://codebase.flowlab.fun/ — confirm `/health` returns 200 after deploy.
 
@@ -95,9 +128,9 @@ See [`.env.example`](.env.example). Key settings:
 |----------|-------------|
 | `DATABASE_URL` | SQLAlchemy URL for PostgreSQL |
 | `APP_ENV` | `development` / `production` |
-| `CORS_ORIGINS` | Comma-separated origins |
+| `CORS_ORIGINS` | Comma-separated origins (include demo Vite ports) |
 | `JWT_SECRET` | JWT signing secret |
-| `DEMO_USERNAME` / `DEMO_PASSWORD` | M0 session stub |
+| `DEMO_USERNAME` / `DEMO_PASSWORD` | Session stub |
 
 ## Docs
 

@@ -12,7 +12,7 @@ Synthetic data only. Demo authentication is **not** hospital-grade MFA/OIDC.
 
 ## M1 — patients, UHID, opaque QR (synthetic)
 
-**Prerequisite:** PostgreSQL backup confirmed before production redeploy (`docs/m1-backup-checklist.md`).
+**Prerequisite:** PostgreSQL backup confirmed before production redeploy (`docs/m1-backup-checklist.md`). User may waive backups for demo environments.
 
 ### Live (Flowlab)
 
@@ -54,6 +54,78 @@ pip install -r requirements.txt
 pytest -q
 ```
 
-## Later milestones
+## M2 — Hospital A → Universal Health Cloud → Hospital B
 
-Hospital A/B demos, extension, prescription sync, §14 full acceptance — M2+.
+Prescription sync is **post-save only** (final/approved). Drafts are rejected. Idempotency key = `source_org_id + source_record_id + version`.
+
+### UI demos (local against Flowlab API)
+
+```powershell
+# Terminal 1 — Harborview A (prescription + sync)
+cd "D:\My Team Projects\QrCode-Card\apps\hospital-a-demo"
+npm install
+npm run dev
+# http://localhost:5173
+
+# Terminal 2 — Ridge Clinic B (retrieve history)
+cd "D:\My Team Projects\QrCode-Card\apps\hospital-b-demo"
+npm install
+npm run dev
+# http://localhost:5174
+```
+
+Default `VITE_API_BASE=https://codebase.flowlab.fun`. Override in each app’s `.env` for localhost API.
+
+**Walkthrough**
+
+1. In Hospital A: auto-login as demo staff for Demo Hospital A → register or select a synthetic patient → enter medication + dose source text → **Save final & sync to cloud**.
+2. Confirm sync status becomes `confirmed` (polls `GET /api/v1/sync-events/{id}`).
+3. Copy the patient’s UHID (or QR token from registration response).
+4. In Hospital B: paste UHID / QR token → **Load synced history** → see MedicationRequest with provenance `Demo Hospital A`.
+
+### API-only walkthrough (PowerShell / curl)
+
+```powershell
+$Base = "https://codebase.flowlab.fun"
+
+# Hospital A session
+$sa = Invoke-RestMethod -Method POST "$Base/api/v1/auth/session" -ContentType "application/json" -Body '{"username":"demo@health.local","password":"demo-password-change-me","org_name":"Demo Hospital A"}'
+$Ha = @{ Authorization = "Bearer $($sa.access_token)" }
+
+# Register synthetic patient (consents A+B by default)
+$reg = Invoke-RestMethod -Method POST "$Base/api/v1/patients" -Headers $Ha -ContentType "application/json" -Body '{"display_name":"Synthetic M2 Bridge"}'
+$PatientId = $reg.id
+$Uhid = $reg.uhid
+
+# Final prescription sync (not a draft)
+$rxBody = @{
+  patient_id = $PatientId
+  source_org_name = "Demo Hospital A"
+  source_record_id = "rx-demo-$(Get-Random)"
+  version = 1
+  medication_text = "Amoxicillin 500mg"
+  dose_text = "1 capsule twice daily for 7 days"
+  status = "final"
+  local_saved = $true
+} | ConvertTo-Json
+$evt = Invoke-RestMethod -Method POST "$Base/api/v1/integration-events" -Headers $Ha -ContentType "application/json" -Body $rxBody
+# Expect status confirmed; retry same payload → duplicate=true, same event id
+
+$sync = Invoke-RestMethod -Method GET "$Base/api/v1/sync-events/$($evt.id)" -Headers $Ha
+
+# Hospital B session + records
+$sb = Invoke-RestMethod -Method POST "$Base/api/v1/auth/session" -ContentType "application/json" -Body '{"username":"demo@health.local","password":"demo-password-change-me","org_name":"Demo Hospital B"}'
+$Hb = @{ Authorization = "Bearer $($sb.access_token)" }
+$records = Invoke-RestMethod -Method GET "$Base/api/v1/patients/$PatientId/records" -Headers $Hb
+# Expect MedicationRequest from Demo Hospital A
+```
+
+### Acceptance checks
+
+| Check | Expected |
+|-------|----------|
+| Draft `status` | HTTP 422, audit deny |
+| Same idempotency key retry | HTTP 200, same event, no duplicate FHIR row |
+| Sync statuses | `queued` → `sent` → `confirmed` (or `failed` + retry) |
+| Hospital B records | Authorized + consented; unauthorized → 403 + audit |
+| QR payload | Still opaque — no medication text in token |

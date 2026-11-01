@@ -1,0 +1,244 @@
+:root {
+  --bg: #1a1f2b;
+  --bg-2: #242b3a;
+  --surface: #2c3448;
+  --ink: #eef2ff;
+  --muted: #9aa6c1;
+  --copper: #d4a574;
+  --copper-deep: #b8814a;
+  --line: rgba(238, 242, 255, 0.12);
+  --ok: #6ee7b7;
+  --danger: #fda4af;
+  --font: "Outfit", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background:
+    linear-gradient(120deg, rgba(212, 165, 116, 0.12), transparent 40%),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 18px,
+      rgba(255, 255, 255, 0.015) 18px,
+      rgba(255, 255, 255, 0.015) 19px
+    ),
+    radial-gradient(800px 500px at 80% -10%, #3a4560, transparent),
+    var(--bg);
+}
+
+.shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.masthead {
+  margin-bottom: 2rem;
+  animation: slide 0.55s ease both;
+}
+
+.masthead .kicker {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin: 0 0 0.5rem;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.masthead p {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  max-width: 36rem;
+}
+
+.api-chip {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.6rem;
+}
+
+.intake {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 1.35rem 1.4rem 1.5rem;
+  animation: slide 0.7s ease both;
+}
+
+.intake h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+input {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 0.85rem;
+}
+
+input:focus {
+  outline: 2px solid rgba(212, 165, 116, 0.45);
+  border-color: var(--copper);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.tabs button {
+  flex: 1;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 0.55rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  color: var(--ink);
+  border-color: var(--copper);
+  background: rgba(212, 165, 116, 0.12);
+}
+
+button.primary {
+  width: 100%;
+  font: inherit;
+  font-weight: 650;
+  border: none;
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, var(--copper), var(--copper-deep));
+  color: #1a140e;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.patient-banner {
+  margin-top: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--copper);
+  background: rgba(44, 52, 72, 0.7);
+  animation: fade 0.4s ease both;
+}
+
+.patient-banner strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
+.patient-banner code {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--ok);
+}
+
+.records {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.record {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 1rem 1.1rem;
+  animation: fade 0.5s ease both;
+}
+
+.record .meta {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+.record h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.record p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 0.95rem;
+  padding: 1rem 0;
+}
+
+.error {
+  color: var(--danger);
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+}
+
+@keyframes slide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
