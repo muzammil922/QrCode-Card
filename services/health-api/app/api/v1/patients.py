@@ -112,6 +112,25 @@ def _authorize_patient_access(
     action: str,
     org_id: uuid.UUID | None = None,
 ) -> None:
+    # Patient JWT may only access their own linked patient record
+    if principal.role == "patient":
+        if principal.patient_id and str(patient.id) == str(principal.patient_id):
+            return
+        write_audit(
+            db,
+            actor=principal.subject,
+            action=action,
+            resource_type="patient",
+            resource_id=str(patient.id),
+            decision="deny",
+            detail={"reason": "patient_self_mismatch"},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Patients may only access their own record",
+        )
+
     if principal.role not in ("demo", "staff", "admin"):
         write_audit(
             db,
@@ -281,6 +300,127 @@ def register_patient(
             display_name=patient.display_name,
         ),
         consent_org_ids=consent_org_ids,
+    )
+
+
+class MeCardResponse(BaseModel):
+    patient_id: uuid.UUID
+    uhid: str
+    display_name: str
+    date_of_birth: date | None
+    is_synthetic: bool
+    qr_token: str
+    note: str = "QR encodes only the opaque token; medical data stays in the API."
+
+
+def _require_self_patient(
+    db: Session, principal: Principal
+) -> Patient:
+    if principal.role != "patient" or not principal.patient_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Patient token required",
+        )
+    try:
+        pid = uuid.UUID(str(principal.patient_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid patient_id in token") from exc
+    patient = db.query(Patient).filter(Patient.id == pid).first()
+    if patient is None:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
+@router.get(
+    "/me",
+    response_model=PatientSummary,
+    summary="Current patient profile (patient JWT)",
+)
+def get_me(
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+) -> PatientSummary:
+    patient = _require_self_patient(db, principal)
+    return PatientSummary(
+        id=patient.id,
+        uhid=patient.uhid,
+        display_name=patient.display_name,
+        date_of_birth=patient.date_of_birth,
+        is_synthetic=patient.is_synthetic,
+        created_at=patient.created_at,
+    )
+
+
+@router.get(
+    "/me/card",
+    response_model=MeCardResponse,
+    summary="Digital health card — rotates opaque QR for display",
+)
+def get_me_card(
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+) -> MeCardResponse:
+    patient = _require_self_patient(db, principal)
+    # Rotate display token (raw cannot be recovered from hash)
+    active = (
+        db.query(QrToken)
+        .filter(
+            QrToken.patient_id == patient.id,
+            QrToken.status == QrTokenStatus.active,
+        )
+        .all()
+    )
+    raw = generate_qr_token()
+    row = QrToken(
+        patient_id=patient.id,
+        token_hash=hash_qr_token(raw),
+        status=QrTokenStatus.active,
+    )
+    db.add(row)
+    db.flush()
+    for t in active:
+        t.status = QrTokenStatus.revoked
+        t.replaced_by_id = row.id
+    write_audit(
+        db,
+        actor=principal.subject,
+        action="patient.card",
+        resource_type="patient",
+        resource_id=str(patient.id),
+        decision="allow",
+        detail={"rotated": True},
+    )
+    db.commit()
+    return MeCardResponse(
+        patient_id=patient.id,
+        uhid=patient.uhid,
+        display_name=patient.display_name,
+        date_of_birth=patient.date_of_birth,
+        is_synthetic=patient.is_synthetic,
+        qr_token=raw,
+    )
+
+
+@router.get(
+    "/me/records",
+    response_model=PatientRecordsPage,
+    summary="Current patient clinical records (patient JWT)",
+)
+def get_me_records(
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> PatientRecordsPage:
+    patient = _require_self_patient(db, principal)
+    return list_patient_records(
+        patient_id=patient.id,
+        db=db,
+        principal=principal,
+        org_id=None,
+        limit=limit,
+        offset=offset,
+        resource_type=None,
     )
 
 

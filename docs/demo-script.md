@@ -140,3 +140,34 @@ See [`extension/README.md`](../extension/README.md).
 4. After M2 sync: paste opaque QR token → **Resolve & load history**.
 5. On Hospital B tab: **Prefill demographics (confirm)** → only approved `data-uhq-field` inputs fill.
 6. On Hospital A tab: sync status marker may appear in side panel when a save is confirmed.
+
+## M4 — Patient portal + Expo app
+
+Patient self-service (synthetic). Demo OTP always **`123456`**.
+
+### API
+
+- `POST /api/v1/auth/patient/register`
+- `POST /api/v1/auth/patient/login`
+- `GET /api/v1/patients/me`
+- `GET /api/v1/patients/me/card` (rotates opaque QR)
+- `GET /api/v1/patients/me/records` (same prescriptions Hospital A synced)
+
+### Web portal
+
+```powershell
+cd "D:\My Team Projects\QrCode-Card\apps\web-patient"
+npm install
+npm run dev
+# http://localhost:5175
+```
+
+### Mobile (Expo)
+
+```powershell
+cd "D:\My Team Projects\QrCode-Card\apps\mobile"
+npm install
+npx expo start
+```
+
+**Walkthrough:** register on portal → note UHID/QR → Hospital A save rx for that patient (staff register or use patient id) → refresh portal history → same meds on Expo after login.

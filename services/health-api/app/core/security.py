@@ -12,11 +12,13 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 class Principal(BaseModel):
-    """Authenticated caller from JWT (demo stub or future staff IdP)."""
+    """Authenticated caller from JWT (demo stub, staff, or patient)."""
 
     subject: str
     role: str = "demo"
     org_id: str | None = None
+    patient_id: str | None = None
+    user_id: str | None = None
 
 
 def create_access_token(subject: str, extra: dict | None = None) -> str:
@@ -49,6 +51,8 @@ def decode_access_token(token: str) -> Principal:
         subject=str(subject),
         role=str(payload.get("role", "demo")),
         org_id=payload.get("org_id"),
+        patient_id=payload.get("patient_id"),
+        user_id=payload.get("user_id"),
     )
 
 
@@ -57,7 +61,7 @@ def get_current_principal(
         HTTPAuthorizationCredentials | None, Depends(bearer_scheme)
     ] = None,
 ) -> Principal:
-    """Require Bearer JWT. Demo session tokens are accepted (not hospital-grade auth)."""
+    """Require Bearer JWT. Demo/patient tokens are accepted (not hospital-grade IdP)."""
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
